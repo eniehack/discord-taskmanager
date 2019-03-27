@@ -19,7 +19,7 @@ func init() {
 }
 
 func main() {
-	log.Printf(Token)
+	log.Printf(fmt.Sprintf("Access Token: %s", Token))
 	discord, err := discordgo.New(fmt.Sprintf("Bot %s", Token))
 	if err != nil {
 		log.Println(err)
@@ -29,7 +29,7 @@ func main() {
 	discord.AddHandler(messageCreate)
 
 	if err := discord.Open(); err != nil {
-		log.Println(err)
+		log.Println("can't connect Discord Server.", err)
 		return
 	}
 	defer discord.Close()
@@ -48,11 +48,10 @@ func messageCreate(s *discordgo.Session, msg *discordgo.MessageCreate) {
 
 	switch fields[0] {
 	case "!add":
-		for i := 0; i < len(msg.Mentions); i++ {
-			log.Println(msg.Mentions[i])
-		}
-		s.ChannelMessageSend(msg.ChannelID, fmt.Sprintf("Called !add. %sは%sを%sまでに終わらせます", msg.Mentions[0].Mention(), fields[2], fields[3]))
+		log.Println(fmt.Sprintf("Called !add: %sは%sを%sまでに終わらせます", msg.Mentions[0].String(), fields[2], fields[3]))
+		s.ChannelMessageSend(msg.ChannelID, fmt.Sprintf("%sは%sを%sまでに終わらせます", msg.Mentions[0].Mention(), fields[2], fields[3]))
 	case "!finished":
-		s.ChannelMessageSend(msg.ChannelID, fmt.Sprintf("Called !finished. %sは%sを完了させました.現在時刻:%s", msg.Author.Mention(), fields[1], time.Now()))
+		log.Println(fmt.Sprintf("Called !finished. %sは%sを完了させました.現在時刻:%s", msg.Author.String(), fields[1], time.Now()))
+		s.ChannelMessageSend(msg.ChannelID, fmt.Sprintf("Called !finished: %sは%sを完了させました.現在時刻:%s", msg.Author.Mention(), fields[1], time.Now()))
 	}
 }
