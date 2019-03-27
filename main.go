@@ -46,8 +46,8 @@ func messageCreate(s *discordgo.Session, msg *discordgo.MessageCreate) {
 		for i := 0; i < len(msg.Mentions); i++ {
 			fmt.Println(msg.Mentions[i])
 		}
-		s.ChannelMessageSend(msg.ChannelID, "Called !add. "+msg.Mentions[0].Mention()+"は"+fields[2]+"を"+fields[3]+"までに終わらせます")
+		s.ChannelMessageSend(msg.ChannelID, fmt.Sprintf("Called !add. %sは%sを%sまでに終わらせます", msg.Mentions[0].Mention(), fields[2], fields[3]))
 	case "!finished":
-		s.ChannelMessageSend(msg.ChannelID, fmt.Sprintf("Called !finished. "+msg.Author.Mention()+"は"+fields[1]+"を完了させました.現在時刻:%s", time.Now()))
+		s.ChannelMessageSend(msg.ChannelID, fmt.Sprintf("Called !finished. %sは%sを完了させました.現在時刻:%s", msg.Author.Mention(), fields[1], time.Now()))
 	}
 }
