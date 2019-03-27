@@ -29,7 +29,7 @@ func main() {
 	}
 	defer discord.Close()
 
-	fmt.Println("Bot is now running.")
+	log.Println("Bot is now running.")
 	<-make(chan struct{})
 }
 
@@ -44,7 +44,7 @@ func messageCreate(s *discordgo.Session, msg *discordgo.MessageCreate) {
 	switch fields[0] {
 	case "!add":
 		for i := 0; i < len(msg.Mentions); i++ {
-			fmt.Println(msg.Mentions[i])
+			log.Println(msg.Mentions[i])
 		}
 		s.ChannelMessageSend(msg.ChannelID, fmt.Sprintf("Called !add. %sは%sを%sまでに終わらせます", msg.Mentions[0].Mention(), fields[2], fields[3]))
 	case "!finished":
