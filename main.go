@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"strings"
@@ -9,12 +10,16 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-var (
-	BotName = "560490545605246997"
-	Token   = "NTYwNDkwNTQ1NjA1MjQ2OTk3.D30uhg.1OSv4OCu2ajJcQCA-iRDFu1qmt4"
-)
+// Token used for Command line parameters.
+var Token string
+
+func init() {
+	flag.StringVar(&Token, "token", "{Some Token}", "Discord Bot Token.")
+	flag.Parse()
+}
 
 func main() {
+	log.Printf(Token)
 	discord, err := discordgo.New(fmt.Sprintf("Bot %s", Token))
 	if err != nil {
 		log.Println(err)
