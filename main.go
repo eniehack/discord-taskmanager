@@ -45,17 +45,22 @@ func messageCreate(s *discordgo.Session, msg *discordgo.MessageCreate) {
 	}
 
 	fields := strings.Fields(msg.Content)
+	jst, err := time.LoadLocation("Asia/Tokyo")
+	if err != nil {
+		log.Println("failed load locaition.", err)
+	}
 
 	switch fields[0] {
 	case "!add":
 		work := fields[len(fields)-2]
-		until, err := time.Parse(time.RFC3339, fields[len(fields)-1])
+
+		until, err := time.ParseInLocation("2006/01/02", fields[len(fields)-1], jst)
 		if err != nil {
 			log.Println("can't parse var:until.", err)
 		}
+
 		// TODO:タスクの記述方法を考える
 		// TODO:SQLiteに接続してタスクの情報を記述する
-		// TODO: String->time.Timeへの変換方法
 		log.Println(
 			fmt.Sprintf(
 				"Called !add: %sは%sを%sまでに終わらせます",
@@ -76,7 +81,6 @@ func messageCreate(s *discordgo.Session, msg *discordgo.MessageCreate) {
 		)
 	case "!finished":
 		// TODO:SQLiteに接続してタスクの状態を変化させる
-		// TODO:時間の表示を変える
 		log.Println(
 			fmt.Sprintf(
 				"Called !finished: %sは%sを完了させました.現在時刻:%s",
