@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"fmt"
 	"log"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // Token used for Command line parameters.
@@ -44,6 +46,12 @@ func messageCreate(s *discordgo.Session, msg *discordgo.MessageCreate) {
 		return
 	}
 
+	db, err := sql.Open("sqlite3", "data.db")
+	if err != nil {
+		log.Println("can't connect database", err)
+	}
+	defer db.Close()
+
 	fields := strings.Fields(msg.Content)
 	jst, err := time.LoadLocation("Asia/Tokyo")
 	if err != nil {
@@ -52,7 +60,7 @@ func messageCreate(s *discordgo.Session, msg *discordgo.MessageCreate) {
 
 	switch fields[0] {
 	case "!add":
-		work := fields[len(fields)-2]
+		task := fields[len(fields)-2]
 
 		until, err := time.ParseInLocation("2006/01/02", fields[len(fields)-1], jst)
 		if err != nil {
@@ -61,11 +69,21 @@ func messageCreate(s *discordgo.Session, msg *discordgo.MessageCreate) {
 
 		// TODO:タスクの記述方法を考える
 		// TODO:SQLiteに接続してタスクの情報を記述する
+		for i := 0; i < len(msg.Mentions); i++ {
+			if _, err := db.Exec(
+				"INSERT INTO tasks (worker, task_name, until) VALUES (?, ?, ?)",
+				msg.Mentions[i].String(),
+				task,
+				until,
+			); err != nil {
+				log.Println("failed INSERT data.", err)
+			}
+
 		log.Println(
 			fmt.Sprintf(
 				"Called !add: %sは%sを%sまでに終わらせます",
-				msg.Mentions[0].String(),
-				work,
+					msg.Mentions[i].String(),
+					task,
 				until,
 			),
 		)
@@ -73,12 +91,14 @@ func messageCreate(s *discordgo.Session, msg *discordgo.MessageCreate) {
 		s.ChannelMessageSend(
 			msg.ChannelID,
 			fmt.Sprintf(
-				"%sは%sを%sまでに終わらせます",
-				msg.Mentions[0].Mention(),
-				work,
+					"%sはTaskID:%sを%sまでに終わらせます",
+					msg.Mentions[i].Mention(),
+					task,
 				until,
 			),
 		)
+		}
+
 	case "!finished":
 		// TODO:SQLiteに接続してタスクの状態を変化させる
 		log.Println(
