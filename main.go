@@ -28,7 +28,14 @@ func main() {
 		return
 	}
 
-	discord.AddHandler(messageCreate)
+	db, err := sql.Open("sqlite3", "data.db")
+	if err != nil {
+		log.Println("can't connect database", err)
+	}
+
+	h := &Handler{DB: db}
+
+	discord.AddHandler(h.messageCreate)
 
 	if err := discord.Open(); err != nil {
 		log.Println("can't connect Discord Server.", err)
@@ -40,7 +47,7 @@ func main() {
 	<-make(chan struct{})
 }
 
-func messageCreate(s *discordgo.Session, msg *discordgo.MessageCreate) {
+func (h *Handler) messageCreate(s *discordgo.Session, msg *discordgo.MessageCreate) {
 
 	if msg.Author.ID == s.State.User.ID {
 		return
@@ -61,6 +68,8 @@ func messageCreate(s *discordgo.Session, msg *discordgo.MessageCreate) {
 	switch fields[0] {
 	case "!add":
 		task := fields[len(fields)-2]
+		db := h.DB
+		defer db.Close()
 
 		until, err := time.ParseInLocation("2006/01/02", fields[len(fields)-1], jst)
 		if err != nil {
@@ -100,6 +109,8 @@ func messageCreate(s *discordgo.Session, msg *discordgo.MessageCreate) {
 		}
 
 	case "!finished":
+		db := h.DB
+		defer db.Close()
 		// TODO:SQLiteに接続してタスクの状態を変化させる
 		log.Println(
 			fmt.Sprintf(
