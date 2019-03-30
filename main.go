@@ -15,6 +15,10 @@ import (
 // Token used for Command line parameters.
 var Token string
 
+type Handler struct {
+	DB *sql.DB
+}
+
 func init() {
 	flag.StringVar(&Token, "token", "{Some Token}", "Discord Bot Token.")
 	flag.Parse()
