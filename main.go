@@ -60,7 +60,6 @@ func (h *Handler) messageCreate(s *discordgo.Session, msg *discordgo.MessageCrea
 	}
 
 	db := h.DB
-	defer db.Close()
 	fields := strings.Fields(msg.Content)
 	jst, err := time.LoadLocation("Asia/Tokyo")
 	if err != nil {
@@ -77,6 +76,7 @@ func (h *Handler) messageCreate(s *discordgo.Session, msg *discordgo.MessageCrea
 			log.Println("can't parse var:until.", err)
 			return
 		}
+		defer db.Close()
 
 		// TODO:タスクの記述方法を考える
 		// TODO:SQLiteに接続してタスクの情報を記述する
@@ -91,11 +91,23 @@ func (h *Handler) messageCreate(s *discordgo.Session, msg *discordgo.MessageCrea
 				return
 			}
 
+			var ID int
+
+			if err := db.QueryRow(
+				"SELECT rowid FROM tasks WHERE worker = ? AND task_name = ? AND until = ?",
+				msg.Mentions[i].String(),
+				task,
+				until,
+			).Scan(&ID); err != nil {
+				log.Println("rowid search error.", err)
+			}
+
 			log.Println(
 				fmt.Sprintf(
-					"Called !add: %sは%sを%sまでに終わらせます",
+					"Called !add: %sは%s(TaskID:%d)を%sまでに終わらせます",
 					msg.Mentions[i].String(),
 					task,
+					ID,
 					until,
 				),
 			)
@@ -103,9 +115,10 @@ func (h *Handler) messageCreate(s *discordgo.Session, msg *discordgo.MessageCrea
 			s.ChannelMessageSend(
 				msg.ChannelID,
 				fmt.Sprintf(
-					"%sはTaskID:%sを%sまでに終わらせます",
+					"%sは%s(TaskID:%d)を%sまでに終わらせます",
 					msg.Mentions[i].Mention(),
 					task,
+					ID,
 					until,
 				),
 			)
@@ -150,8 +163,6 @@ func (h *Handler) messageCreate(s *discordgo.Session, msg *discordgo.MessageCrea
 func (h *Handler) Alerm(s *discordgo.Session, msg *discordgo.MessageCreate) {
 
 	db := h.DB
-	defer db.Close()
-	msg.Message.MentionEveryone = true
 
 	var (
 		ID       int
@@ -166,22 +177,16 @@ func (h *Handler) Alerm(s *discordgo.Session, msg *discordgo.MessageCreate) {
 			"SELECT rowid, worker, task_name, until FROM tasks WHERE finished_flag = '0'",
 		)
 		if err != nil {
-			log.Println("Database SELECT Error.")
+			log.Println("Database SELECT Error.", err)
 			return
 		}
+		defer db.Close()
 		defer rows.Close()
 
 		for rows.Next() {
 			if err := rows.Scan(&ID, &Worker, &TaskName, &Until); err != nil {
 				log.Println("Scanning Error")
 			}
-			// TODO:Untilをstringからtime.Timeに変換(time.Parseを用いる)
-			/*
-				UntilTime, err := time.Parse(time.RFC3339, Until)
-				if err != nil {
-					log.Println("time.Parse Error", err)
-				}
-			*/
 			if deadline, _ := time.ParseDuration("0s"); time.Until(Until) < deadline {
 				log.Println(
 					"%sさんが担当の作業%s(taskid:%d)は〆切です.",
@@ -192,7 +197,8 @@ func (h *Handler) Alerm(s *discordgo.Session, msg *discordgo.MessageCreate) {
 				s.ChannelMessageSend(
 					msg.ChannelID,
 					fmt.Sprintf(
-						"%sさんが担当の作業%s(taskid:%d)は〆切です.",
+						"%s %sさんが担当の作業%s(taskid:%d)は〆切です.",
+						"@everyone",
 						Worker,
 						TaskName,
 						ID,
@@ -205,7 +211,7 @@ func (h *Handler) Alerm(s *discordgo.Session, msg *discordgo.MessageCreate) {
 				// UserIDをSQLに格納する OR
 				// everyoneでメンションする
 				log.Println(
-					"%s さん明日24:00に〆切となる〆切の作業%s(taskid:%d)があります.",
+					"%sさん明日24:00に〆切となる〆切の作業%s(taskid:%d)があります.",
 					Worker,
 					TaskName,
 					ID,
@@ -213,7 +219,8 @@ func (h *Handler) Alerm(s *discordgo.Session, msg *discordgo.MessageCreate) {
 				s.ChannelMessageSend(
 					msg.ChannelID,
 					fmt.Sprintf(
-						"%s さんは明日24:00に〆切となる作業%s(taskid:%d)があります.",
+						"%s %sさんは明日24:00に〆切となる作業%s(taskid:%d)があります.",
+						"@everyone",
 						Worker,
 						TaskName,
 						ID,
