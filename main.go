@@ -59,6 +59,8 @@ func (h *Handler) messageCreate(s *discordgo.Session, msg *discordgo.MessageCrea
 		return
 	}
 
+	db := h.DB
+	defer db.Close()
 	fields := strings.Fields(msg.Content)
 	jst, err := time.LoadLocation("Asia/Tokyo")
 	if err != nil {
@@ -69,8 +71,6 @@ func (h *Handler) messageCreate(s *discordgo.Session, msg *discordgo.MessageCrea
 	switch fields[0] {
 	case "!add":
 		task := fields[len(fields)-2]
-		db := h.DB
-		defer db.Close()
 
 		until, err := time.ParseInLocation("2006/01/02", fields[len(fields)-1], jst)
 		if err != nil {
@@ -111,9 +111,7 @@ func (h *Handler) messageCreate(s *discordgo.Session, msg *discordgo.MessageCrea
 			)
 		}
 
-	case "!finished":
-		db := h.DB
-		defer db.Close()
+	case "!finish":
 		// TODO:SQLiteに接続してタスクの状態を変化させる
 		log.Println(
 			fmt.Sprintf(
@@ -132,12 +130,21 @@ func (h *Handler) messageCreate(s *discordgo.Session, msg *discordgo.MessageCrea
 				time.Now().Format("2006/01/02 Mon 15:04:05 MST"),
 			),
 		)
-	case "!debug":
+	case "!help":
+
+		add := "!add: 作業を追加します。\n 使い方:!add [作業をする人(メンション付きで)] [作業内容] [期限 例:2019/04/01]"
+		finish := "!finish: 自分の作業が完了した旨を報告する際に使用します. \n 使い方: !finish [タスクID(!addした際に表示されます)]"
+
 		s.ChannelMessageSend(
 			msg.ChannelID,
-			fmt.Sprintf("%#v", msg.Message),
+			fmt.Sprintf(
+				"\n%s\n%s",
+				add,
+				finish,
+			),
 		)
 	}
+
 }
 
 func (h *Handler) Alerm(s *discordgo.Session, msg *discordgo.MessageCreate) {
