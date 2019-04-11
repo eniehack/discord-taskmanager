@@ -172,16 +172,37 @@ func (h *Handler) messageCreate(s *discordgo.Session, msg *discordgo.MessageCrea
 		)
 	case "!help":
 
-		add := "!add: 作業を追加します。\n 使い方:!add [作業をする人(メンション付きで)] [作業内容] [期限 例:2019/04/01]"
-		finish := "!finish: 自分の作業が完了した旨を報告する際に使用します. \n 使い方: !finish [タスクID(!addした際に表示されます)]"
+		add := "作業を追加します。\n 使い方:!add [作業をする人(メンション付きで)] [作業内容] [期限 例:2019/04/01]"
+		finish := "自分の作業が完了した旨を報告する際に使用します. \n 使い方: !finish [タスクID(!addした際に表示されます)]"
 
-		s.ChannelMessageSend(
+		EmbedMessage := &discordgo.MessageEmbed{
+			Author: &discordgo.MessageEmbedAuthor{
+				URL:  "https://github.com/eniehack/discord-taskmanager",
+				Name: "Discord Task Manager",
+			},
+			Color:       0x00ff00, // Green
+			Description: "This is a command help.",
+			Fields: []*discordgo.MessageEmbedField{
+				&discordgo.MessageEmbedField{
+					Name:   "!add command",
+					Value:  add,
+					Inline: true,
+				},
+				&discordgo.MessageEmbedField{
+					Name:   "!finish command",
+					Value:  finish,
+					Inline: true,
+				},
+			},
+			Image:     &discordgo.MessageEmbedImage{},
+			Thumbnail: &discordgo.MessageEmbedThumbnail{},
+			Timestamp: time.Now().Format(time.RFC3339),
+			Title:     "Help",
+		}
+
+		s.ChannelMessageSendEmbed(
 			msg.ChannelID,
-			fmt.Sprintf(
-				"\n%s\n%s",
-				add,
-				finish,
-			),
+			EmbedMessage,
 		)
 	}
 
