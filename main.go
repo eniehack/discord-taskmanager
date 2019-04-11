@@ -38,6 +38,7 @@ func main() {
 		log.Println("can't connect database", err)
 	}
 	db.SetConnMaxLifetime(1)
+	defer db.Close()
 
 	h := &Handler{DB: db}
 
@@ -77,7 +78,6 @@ func (h *Handler) messageCreate(s *discordgo.Session, msg *discordgo.MessageCrea
 			log.Println("can't parse var:until.", err)
 			return
 		}
-		defer db.Close()
 
 		// TODO:タスクの記述方法を考える
 		// TODO:SQLiteに接続してタスクの情報を記述する
@@ -207,7 +207,6 @@ func (h *Handler) Alerm(s *discordgo.Session, msg *discordgo.MessageCreate) {
 			log.Println("Database SELECT Error.", err)
 			return
 		}
-		defer db.Close()
 		defer rows.Close()
 
 		for rows.Next() {
