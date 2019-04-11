@@ -26,19 +26,21 @@ func init() {
 }
 
 func main() {
+
+	db, err := sql.Open("sqlite3", "data.db")
+	if err != nil {
+		log.Println("can't connect database", err)
+		return
+	}
+	db.SetConnMaxLifetime(1)
+	defer db.Close()
+
 	log.Printf(fmt.Sprintf("Access Token: %s", Token))
 	discord, err := discordgo.New(fmt.Sprintf("Bot %s", Token))
 	if err != nil {
 		log.Println(err)
 		return
 	}
-
-	db, err := sql.Open("sqlite3", "data.db")
-	if err != nil {
-		log.Println("can't connect database", err)
-	}
-	db.SetConnMaxLifetime(1)
-	defer db.Close()
 
 	h := &Handler{DB: db}
 
@@ -237,10 +239,6 @@ func (h *Handler) Alerm(s *discordgo.Session, msg *discordgo.MessageCreate) {
 				)
 			}
 			if day, _ := time.ParseDuration("24h"); time.Until(Until) < day {
-				// TODO:Workerを#で分割し、前をUsername、後をDiscriminatorとしてWorkerTypeに挿入
-				// TODO:UsernameとDiscriminatorからUserIDを求める方法を考える(例:直接APIにアクセスする)か、
-				// UserIDをSQLに格納する OR
-				// everyoneでメンションする
 				log.Println(
 					"%sさん明日24:00に〆切となる〆切の作業%s(taskid:%d)があります.",
 					Worker.String(),
@@ -262,41 +260,6 @@ func (h *Handler) Alerm(s *discordgo.Session, msg *discordgo.MessageCreate) {
 			log.Println(err)
 		}
 	})
-	/*
-		schedule.Schedule().Every().Day().At("7:00").Do(func() {
-			rows, err := db.Query(
-				"SELECT rowid, worker, task_name, until FROM tasks WHERE finished_flag = '0'",
-			)
-			if err != nil {
-				log.Println("Database SELECT Error.")
-				return
-			}
-			defer rows.Close()
-
-			for rows.Next() {
-				if err := rows.Scan(&ID, &Worker, &TaskName, &Until); err != nil {
-					log.Println("Scanning Error")
-				}
-				if deadline, _ := time.ParseDuration("24h"); time.Until(Until) < deadline {
-					log.Println(
-						"%sさんが担当の作業%s(taskid:%d)は今夜24:00に〆切です.",
-						Worker,
-						TaskName,
-						ID,
-					)
-					s.ChannelMessageSend(
-						msg.ChannelID,
-						fmt.Sprintf(
-							"%sさんが担当の作業%s(taskid:%d)は今夜24:00に〆切です.",
-							Worker,
-							TaskName,
-							ID,
-						),
-					)
-				}
-			}
-		})
-	*/
 
 	schedule.Run()
 }
