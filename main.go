@@ -126,20 +126,46 @@ func (h *Handler) messageCreate(s *discordgo.Session, msg *discordgo.MessageCrea
 
 	case "!finish":
 		// TODO:SQLiteに接続してタスクの状態を変化させる
+
+		// ユーザーの取得
+		TaskID := fields[len(fields)-1]
+		var TaskName, WorkerID string
+
+		if _, err := db.Exec(
+			"UPDATE tasks SET finished_flag = 1 WHERE rowid = ?",
+			TaskID,
+		); err != nil {
+			log.Println(err)
+		}
+
+		if err := db.QueryRow(
+			"SELECT task_name, worker FROM tasks WHERE rowid = ?",
+			TaskID,
+		).Scan(&TaskName, &WorkerID); err != nil {
+			log.Println(err)
+		}
+
+		Worker, err := s.User(WorkerID)
+		if err != nil {
+
+		}
+
 		log.Println(
 			fmt.Sprintf(
-				"Called !finished: %sは%sを完了させました.現在時刻:%s",
-				msg.Author.String(),
-				fields[1],
+				"Called !finished: %sはTaskID:%sの'%s'を完了させました.現在時刻:%s",
+				Worker,
+				TaskID,
+				TaskName,
 				time.Now().Format("2006/01/02 Mon 15:04:05 MST"),
 			),
 		)
 		s.ChannelMessageSend(
 			msg.ChannelID,
 			fmt.Sprintf(
-				"Called !finished: %sは%sを完了させました.現在時刻:%s",
-				msg.Author.Mention(),
-				fields[1],
+				"%s はTaskID:%sの'%s'を完了させました.現在時刻:%s",
+				Worker.Mention(),
+				TaskID,
+				TaskName,
 				time.Now().Format("2006/01/02 Mon 15:04:05 MST"),
 			),
 		)
