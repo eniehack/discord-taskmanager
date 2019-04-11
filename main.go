@@ -37,6 +37,7 @@ func main() {
 	if err != nil {
 		log.Println("can't connect database", err)
 	}
+	db.SetConnMaxLifetime(1)
 
 	h := &Handler{DB: db}
 
