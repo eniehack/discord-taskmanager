@@ -230,7 +230,7 @@ func (h *Handler) messageCreate(s *discordgo.Session, msg *discordgo.MessageCrea
 		Worker, err := s.User(WorkerID)
 		if err != nil {
 			log.Println(err)
-	}
+		}
 
 		log.Println(
 			"%sさんの作業 %s(taskid:%d)の〆切を%s変更します.",
@@ -265,6 +265,9 @@ func (h *Handler) Alerm(s *discordgo.Session, msg *discordgo.MessageCreate) {
 
 	schedule := clockwork.NewScheduler()
 	schedule.Schedule().Every().Day().At("0:00").Do(func() {
+
+		time.Sleep(2 * time.Minute)
+
 		rows, err := db.Query(
 			"SELECT rowid, worker, task_name, until FROM tasks WHERE finished_flag = '0'",
 		)
