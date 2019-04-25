@@ -176,6 +176,7 @@ func (h *Handler) messageCreate(s *discordgo.Session, msg *discordgo.MessageCrea
 
 		add := "作業を追加します.\n使い方:`!add [作業をする人(メンション付きで)] [作業内容] [期限 例:2019/04/01]`"
 		finish := "自分の作業が完了した旨を報告する際に使用します. \n使い方: `!finish [タスクID(!addした際に表示されます)]`"
+		move := "作業の〆切を変更します.\n使い方:`!move [タスクID(!addした際に表示されます)]`"
 
 		EmbedMessage := &discordgo.MessageEmbed{
 			Author: &discordgo.MessageEmbedAuthor{
@@ -193,6 +194,11 @@ func (h *Handler) messageCreate(s *discordgo.Session, msg *discordgo.MessageCrea
 				&discordgo.MessageEmbedField{
 					Name:   "!finish command",
 					Value:  finish,
+					Inline: true,
+				},
+				&discordgo.MessageEmbedField{
+					Name:   "!move command",
+					Value:  move,
 					Inline: true,
 				},
 			},
