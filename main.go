@@ -206,6 +206,49 @@ func (h *Handler) messageCreate(s *discordgo.Session, msg *discordgo.MessageCrea
 			msg.ChannelID,
 			EmbedMessage,
 		)
+
+	case "!move":
+		var WorkerID, TaskName string
+		TaskID := fields[len(fields)-2]
+		Until := fields[len(fields)-1]
+		// SQL
+		if _, err := db.Exec(
+			"UPDATE tasks SET until = ? WHERE rowid = ?",
+			Until,
+			TaskID,
+		); err != nil {
+			log.Println(err)
+		}
+
+		if err := db.QueryRow(
+			"SELECT worker, task_name FROM tasks WHERE TaskID = ?",
+			TaskID,
+		).Scan(&WorkerID, &TaskName); err != nil {
+			log.Println(err)
+		}
+
+		Worker, err := s.User(WorkerID)
+		if err != nil {
+			log.Println(err)
+	}
+
+		log.Println(
+			"%sさんの作業 %s(taskid:%d)の〆切を%s変更します.",
+			Worker.String(),
+			TaskName,
+			TaskID,
+			Until,
+		)
+		s.ChannelMessageSend(
+			msg.ChannelID,
+			fmt.Sprintf(
+				"%s さんの作業 %s(taskid:%d)の〆切を変更します.",
+				Worker.Mention(),
+				TaskName,
+				TaskID,
+				Until,
+			),
+		)
 	}
 }
 
